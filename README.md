@@ -232,6 +232,39 @@ Requires: `bun`, `gh`
 
 Tarballs are written to `dist/`.
 
+## Releasing a New Version
+
+This project's version tracks [korotovsky/slack-mcp-server](https://github.com/korotovsky/slack-mcp-server) releases. To release a new version:
+
+### 1. Update the version pin
+
+Edit `SLACK_MCP_VERSION` in both `generate.sh` and `build.sh` to the new version:
+
+```bash
+# In both generate.sh and build.sh, change:
+SLACK_MCP_VERSION="v1.1.29"  # ← new version
+```
+
+### 2. Regenerate the bundle (if tools changed)
+
+If the new slack-mcp-server version adds or modifies tools, regenerate the CLI bundle:
+
+```bash
+SLACK_MCP_XOXP_TOKEN="xoxp-..." ./generate.sh
+```
+
+Skip this step if the release is only bug fixes with no tool schema changes.
+
+### 3. Commit, tag, and push
+
+```bash
+git add -A && git commit -m "chore: bump slack-mcp-server to v1.1.29"
+git tag v1.1.29
+git push origin main v1.1.29
+```
+
+Pushing the tag triggers the [GitHub Actions release workflow](.github/workflows/release.yml), which cross-compiles binaries for all platforms and creates a GitHub Release with the tarballs attached.
+
 ## License
 
 MIT
