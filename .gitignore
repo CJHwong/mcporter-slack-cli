@@ -1,0 +1,23 @@
+# Build output
+dist/
+*.tar.gz
+
+# Binaries (downloaded or compiled)
+slack-mcp-server
+slack-cli-bin
+slack-cli-darwin-*/
+slack-cli-linux-*/
+
+# Bun build cache
+*.bun-build
+
+# OS
+.DS_Store
+
+# Editor
+*.swp
+*.swo
+*~
+
+# Runtime state
+.slack-cli/
