@@ -19,9 +19,11 @@ jobs:
         with:
           bun-version: "1.2.4"
 
+      - uses: actions/setup-go@d35c59abb061a4a6fb18e82ac0862c26744d6ab5 # v5
+        with:
+          go-version: stable
+
       - name: Build all platforms
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: ./build.sh all
 
       - name: Upload tarballs

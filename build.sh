@@ -12,10 +12,10 @@ set -euo pipefail
 # The bundle (src/slack-cli-bundle.js) must already exist.
 # Run generate.sh first if it doesn't.
 #
-# Prerequisites: bun, gh (GitHub CLI)
+# Prerequisites: bun, go (Go compiler)
 
 SLACK_MCP_REPO="korotovsky/slack-mcp-server"
-SLACK_MCP_VERSION="v1.1.28"
+SLACK_MCP_COMMIT="6ddc82863ab8b35b2ab73e9258083616532a973d"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 DIST_DIR="$SCRIPT_DIR/dist"
 BUNDLE="$SCRIPT_DIR/src/slack-cli-bundle.js"
@@ -80,7 +80,7 @@ fi
 # ---------------------------------------------------------------------------
 
 command -v bun >/dev/null 2>&1 || die "bun is required but not found in PATH"
-command -v gh  >/dev/null 2>&1 || die "gh (GitHub CLI) is required but not found in PATH"
+command -v go  >/dev/null 2>&1 || die "go (Go compiler) is required but not found in PATH"
 [[ -f "$BUNDLE" ]] || die "Bundle not found at $BUNDLE. Run generate.sh first."
 
 # ---------------------------------------------------------------------------
@@ -89,6 +89,11 @@ command -v gh  >/dev/null 2>&1 || die "gh (GitHub CLI) is required but not found
 
 WORK_DIR="$(mktemp -d)"
 mkdir -p "$DIST_DIR"
+
+echo "==> Cloning slack-mcp-server at $SLACK_MCP_COMMIT..."
+REPO_DIR="$WORK_DIR/slack-mcp-server"
+git clone --quiet --depth 1 https://github.com/$SLACK_MCP_REPO "$REPO_DIR"
+(cd "$REPO_DIR" && git fetch --quiet --depth 1 origin "$SLACK_MCP_COMMIT" && git checkout --quiet "$SLACK_MCP_COMMIT")
 
 echo "==> Bundle: $BUNDLE"
 echo "==> Target(s): $PLATFORMS"
@@ -103,19 +108,15 @@ for PLATFORM in $PLATFORMS; do
   echo "==> Building slack-cli for $PLATFORM..."
 
   STAGE_DIR="$WORK_DIR/stage-${PLATFORM}"
-  SERVER_DIR="$WORK_DIR/server-${PLATFORM}"
-  mkdir -p "$STAGE_DIR" "$SERVER_DIR"
+  mkdir -p "$STAGE_DIR"
 
-  # 1. Download slack-mcp-server for this platform
-  ASSET="slack-mcp-server-${PLATFORM}"
-  echo "    Downloading $ASSET..."
-  gh release download "$SLACK_MCP_VERSION" \
-    --repo "$SLACK_MCP_REPO" \
-    --pattern "$ASSET" \
-    --dir "$SERVER_DIR" \
-    --clobber
-  mv "$SERVER_DIR/$ASSET" "$SERVER_DIR/slack-mcp-server"
-  chmod +x "$SERVER_DIR/slack-mcp-server"
+  # 1. Cross-compile slack-mcp-server for this platform
+  GOOS="${PLATFORM%-*}"
+  GOARCH="${PLATFORM#*-}"
+  SERVER_BIN="$WORK_DIR/slack-mcp-server-${PLATFORM}"
+  echo "    Building slack-mcp-server for $GOOS/$GOARCH..."
+  (cd "$REPO_DIR" && CGO_ENABLED=0 GOOS="$GOOS" GOARCH="$GOARCH" go build -o "$SERVER_BIN" ./cmd/slack-mcp-server)
+  chmod +x "$SERVER_BIN"
 
   # 2. Cross-compile the bundle
   BUN_TARGET="$(bun_target_for "$PLATFORM")"
@@ -423,7 +424,7 @@ WRAPPER_EOF
 
   # 4. Assemble and package tarball
   cp "$COMPILED"                    "$STAGE_DIR/slack-cli-bin"
-  cp "$SERVER_DIR/slack-mcp-server" "$STAGE_DIR/slack-mcp-server"
+  cp "$SERVER_BIN" "$STAGE_DIR/slack-mcp-server"
   chmod +x "$STAGE_DIR/slack-cli-bin" "$STAGE_DIR/slack-mcp-server"
 
   TARBALL="$DIST_DIR/slack-cli-${PLATFORM}.tar.gz"

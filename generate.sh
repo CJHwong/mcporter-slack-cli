@@ -11,10 +11,10 @@ set -euo pipefail
 #
 # Output: src/slack-cli-bundle.js (committed to repo)
 #
-# Prerequisites: bun, npx (with mcporter), gh (GitHub CLI)
+# Prerequisites: bun, npx (with mcporter), go (Go compiler)
 
 SLACK_MCP_REPO="korotovsky/slack-mcp-server"
-SLACK_MCP_VERSION="v1.1.28"
+SLACK_MCP_COMMIT="6ddc82863ab8b35b2ab73e9258083616532a973d"
 MCPORTER_VERSION="0.7.3"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 SRC_DIR="$SCRIPT_DIR/src"
@@ -47,10 +47,10 @@ trap cleanup EXIT
 [[ -n "${SLACK_MCP_XOXP_TOKEN:-}" ]] || die "SLACK_MCP_XOXP_TOKEN is required. Set it to a valid xoxp-... token."
 command -v bun >/dev/null 2>&1 || die "bun is required"
 command -v npx >/dev/null 2>&1 || die "npx is required"
-command -v gh  >/dev/null 2>&1 || die "gh is required"
+command -v go  >/dev/null 2>&1 || die "go is required"
 
 # ---------------------------------------------------------------------------
-# Detect host platform and download server binary
+# Detect host platform and build server binary
 # ---------------------------------------------------------------------------
 
 OS="$(uname -s | tr '[:upper:]' '[:lower:]')"
@@ -63,15 +63,14 @@ WORK_DIR="$(mktemp -d)"
 BIN_DIR="$WORK_DIR/bin"
 mkdir -p "$BIN_DIR" "$SRC_DIR"
 
-ASSET="slack-mcp-server-${HOST_PLATFORM}"
-echo "==> Downloading $ASSET for introspection..."
-gh release download "$SLACK_MCP_VERSION" \
-  --repo "$SLACK_MCP_REPO" \
-  --pattern "$ASSET" \
-  --dir "$BIN_DIR" \
-  --clobber
-chmod +x "$BIN_DIR/$ASSET"
-mv "$BIN_DIR/$ASSET" "$BIN_DIR/slack-mcp-server"
+echo "==> Cloning slack-mcp-server at $SLACK_MCP_COMMIT..."
+REPO_DIR="$WORK_DIR/slack-mcp-server"
+git clone --quiet --depth 1 https://github.com/$SLACK_MCP_REPO "$REPO_DIR"
+(cd "$REPO_DIR" && git fetch --quiet --depth 1 origin "$SLACK_MCP_COMMIT" && git checkout --quiet "$SLACK_MCP_COMMIT")
+
+echo "==> Building slack-mcp-server for $HOST_PLATFORM..."
+(cd "$REPO_DIR" && CGO_ENABLED=0 go build -o "$BIN_DIR/slack-mcp-server" ./cmd/slack-mcp-server)
+chmod +x "$BIN_DIR/slack-mcp-server"
 
 # ---------------------------------------------------------------------------
 # Start server in SSE mode for introspection
@@ -79,6 +78,13 @@ mv "$BIN_DIR/$ASSET" "$BIN_DIR/slack-mcp-server"
 
 echo "==> Starting slack-mcp-server in SSE mode for introspection..."
 SERVER_LOG="$WORK_DIR/server.log"
+
+# Enable all write-gated tools so introspection discovers every tool schema.
+# Users still control which write tools are active at runtime via their own env vars.
+export SLACK_MCP_ADD_MESSAGE_TOOL=true
+export SLACK_MCP_REACTION_TOOL=true
+export SLACK_MCP_ATTACHMENT_TOOL=true
+
 "$BIN_DIR/slack-mcp-server" -transport sse > "$SERVER_LOG" 2>&1 &
 SERVER_PID=$!
 
