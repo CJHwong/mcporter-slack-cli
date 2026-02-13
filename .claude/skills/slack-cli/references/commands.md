@@ -96,6 +96,119 @@ slack-cli conversations-add-message --channel-id '#my-channel' --payload "Hello"
 slack-cli conversations-add-message --channel-id '#my-channel' --thread-ts 1234567890.123456 --payload "Thread reply"
 ```
 
+## users-search
+
+Search users by name, email, or display name.
+
+```bash
+slack-cli users-search --pattern <query>
+```
+
+```bash
+slack-cli users-search --pattern "john"
+slack-cli users-search --pattern "john.doe@company.com"
+```
+
+## usergroups-list
+
+List all user groups (@-mention groups like @engineering).
+
+```bash
+slack-cli usergroups-list [--include-users true] [--include-count true] [--include-disabled true]
+```
+
+```bash
+slack-cli usergroups-list
+slack-cli usergroups-list --include-users true --include-disabled true
+```
+
+## usergroups-me
+
+List, join, or leave user groups for the current user.
+
+```bash
+slack-cli usergroups-me --action <list|join|leave> [--usergroup-id <id>]
+```
+
+- `--action list`: list groups you belong to (no `--usergroup-id` needed)
+- `--action join`: join a group (requires `--usergroup-id`)
+- `--action leave`: leave a group (requires `--usergroup-id`)
+
+```bash
+slack-cli usergroups-me --action list
+slack-cli usergroups-me --action join --usergroup-id S0123456789
+```
+
+## usergroups-create
+
+Create a new user group. Requires `usergroups:write` scope.
+
+```bash
+slack-cli usergroups-create --name <name> --handle <handle> [--description <desc>] [--channels <channel-ids>]
+```
+
+```bash
+slack-cli usergroups-create --name "Backend Team" --handle "backend"
+```
+
+## usergroups-update
+
+Update user group metadata (name, handle, description). Requires `usergroups:write` scope.
+
+```bash
+slack-cli usergroups-update --usergroup-id <id> [--name <name>] [--handle <handle>] [--description <desc>] [--channels <channel-ids>]
+```
+
+At least one field besides `--usergroup-id` is required.
+
+## usergroups-users-update
+
+Replace all members of a user group. **Warning: completely replaces the member list.** Requires `usergroups:write` scope.
+
+```bash
+slack-cli usergroups-users-update --usergroup-id <id> --users <user-ids>
+```
+
+`--users`: comma-separated user IDs.
+
+## reactions-add
+
+Add an emoji reaction to a message. Requires `SLACK_MCP_REACTION_TOOL` env var.
+
+```bash
+slack-cli reactions-add --channel-id <id> --timestamp <ts> --reaction <emoji>
+```
+
+`--reaction`: emoji name without colons (e.g. `thumbsup`, `rocket`, `white_check_mark`).
+
+```bash
+slack-cli reactions-add --channel-id '#general' --timestamp 1234567890.123456 --reaction thumbsup
+```
+
+## reactions-remove
+
+Remove an emoji reaction from a message. Requires `SLACK_MCP_REACTION_TOOL` env var.
+
+```bash
+slack-cli reactions-remove --channel-id <id> --timestamp <ts> --reaction <emoji>
+```
+
+```bash
+slack-cli reactions-remove --channel-id '#general' --timestamp 1234567890.123456 --reaction thumbsup
+```
+
+## attachment-get-data
+
+Download attachment content by file ID. Requires `SLACK_MCP_ATTACHMENT_TOOL` env var. 5MB file size limit. Text files return content as-is; binary files return base64.
+
+```bash
+slack-cli attachment-get-data --file-id <id>
+```
+
+```bash
+slack-cli attachment-get-data --file-id F0123456789
+```
+
 ## Global Flags
 
 - `-o raw`: raw MCP JSON envelope (only format that differs from default CSV)

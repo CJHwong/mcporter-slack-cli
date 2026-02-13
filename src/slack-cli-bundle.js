@@ -33050,7 +33050,7 @@ function createServerProxy(runtime, serverName, mapOrOptions, maybeOptions) {
     }
   });
 }
-// tmp/bundle-kXgZXV/slack-cli.ts
+// tmp/bundle-UFBlvD/slack-cli.ts
 var embeddedServer = {
   name: "slack-cli",
   description: "Slack MCP Server",
@@ -33060,6 +33060,18 @@ var embeddedServer = {
   }
 };
 var embeddedSchemas = {
+  attachment_get_data: {
+    type: "object",
+    properties: {
+      file_id: {
+        description: "The ID of the attachment to download, in format Fxxxxxxxxxx. Attachment IDs can be found in message metadata when HasMedia is true or AttachmentCount > 0.",
+        type: "string"
+      }
+    },
+    required: [
+      "file_id"
+    ]
+  },
   channels_list: {
     type: "object",
     properties: {
@@ -33097,8 +33109,8 @@ var embeddedSchemas = {
         description: "Content type of the message. Default is 'text/markdown'. Allowed values: 'text/markdown', 'text/plain'.",
         type: "string"
       },
-      payload: {
-        description: "Message payload in specified content_type format. Example: 'Hello, world!' for text/plain or '# Hello, world!' for text/markdown.",
+      text: {
+        description: "Message text in specified content_type format. Example: 'Hello, world!' for text/plain or '# Hello, world!' for text/markdown.",
         type: "string"
       },
       thread_ts: {
@@ -33221,12 +33233,184 @@ var embeddedSchemas = {
         type: "string"
       }
     }
+  },
+  reactions_add: {
+    type: "object",
+    properties: {
+      channel_id: {
+        description: "ID of the channel in format Cxxxxxxxxxx or its name starting with #... or @... aka #general or @username_dm.",
+        type: "string"
+      },
+      emoji: {
+        description: "The name of the emoji to add as a reaction (without colons). Example: 'thumbsup', 'heart', 'rocket'.",
+        type: "string"
+      },
+      timestamp: {
+        description: "Timestamp of the message to add reaction to, in format 1234567890.123456.",
+        type: "string"
+      }
+    },
+    required: [
+      "channel_id",
+      "timestamp",
+      "emoji"
+    ]
+  },
+  reactions_remove: {
+    type: "object",
+    properties: {
+      channel_id: {
+        description: "ID of the channel in format Cxxxxxxxxxx or its name starting with #... or @... aka #general or @username_dm.",
+        type: "string"
+      },
+      emoji: {
+        description: "The name of the emoji to remove as a reaction (without colons). Example: 'thumbsup', 'heart', 'rocket'.",
+        type: "string"
+      },
+      timestamp: {
+        description: "Timestamp of the message to remove reaction from, in format 1234567890.123456.",
+        type: "string"
+      }
+    },
+    required: [
+      "channel_id",
+      "timestamp",
+      "emoji"
+    ]
+  },
+  usergroups_create: {
+    type: "object",
+    properties: {
+      channels: {
+        description: "Comma-separated channel IDs where this group is commonly mentioned. Members get suggestions to join these channels.",
+        type: "string"
+      },
+      description: {
+        description: "Purpose or description shown in group details (e.g., 'Backend and frontend engineers').",
+        type: "string"
+      },
+      handle: {
+        description: "The @mention handle without the @ symbol (e.g., 'engineering' for @engineering). Keep it short and lowercase. If omitted, Slack auto-generates one from the name.",
+        type: "string"
+      },
+      name: {
+        description: "Display name of the user group (e.g., 'Engineering Team', 'Design Squad').",
+        type: "string"
+      }
+    },
+    required: [
+      "name"
+    ]
+  },
+  usergroups_list: {
+    type: "object",
+    properties: {
+      include_count: {
+        default: true,
+        description: "Include user count for each group. Default is true.",
+        type: "boolean"
+      },
+      include_disabled: {
+        default: false,
+        description: "Include disabled/archived groups. Default is false.",
+        type: "boolean"
+      },
+      include_users: {
+        default: false,
+        description: "Include list of user IDs in each group. Default is false.",
+        type: "boolean"
+      }
+    }
+  },
+  usergroups_me: {
+    type: "object",
+    properties: {
+      action: {
+        description: "Action to perform: 'list' returns CSV of groups you're a member of, 'join' adds you to a group, 'leave' removes you from a group.",
+        type: "string"
+      },
+      usergroup_id: {
+        description: "ID of the user group (starts with 'S', e.g., 'S0123456789'). Required for 'join' and 'leave' actions. Get IDs from usergroups_list.",
+        type: "string"
+      }
+    },
+    required: [
+      "action"
+    ]
+  },
+  usergroups_update: {
+    type: "object",
+    properties: {
+      channels: {
+        description: "New default channel IDs (comma-separated). Replaces existing default channels.",
+        type: "string"
+      },
+      description: {
+        description: "New description for the group.",
+        type: "string"
+      },
+      handle: {
+        description: "New @mention handle (without @). Changing this changes how users mention the group.",
+        type: "string"
+      },
+      name: {
+        description: "New display name for the group.",
+        type: "string"
+      },
+      usergroup_id: {
+        description: "ID of the user group to update (starts with 'S', e.g., 'S0123456789'). Get IDs from usergroups_list.",
+        type: "string"
+      }
+    },
+    required: [
+      "usergroup_id"
+    ]
+  },
+  usergroups_users_update: {
+    type: "object",
+    properties: {
+      usergroup_id: {
+        description: "ID of the user group (starts with 'S', e.g., 'S0123456789'). Get IDs from usergroups_list.",
+        type: "string"
+      },
+      users: {
+        description: "Comma-separated user IDs that will become the COMPLETE member list (e.g., 'U0123456789,U9876543210'). All current members not in this list will be removed.",
+        type: "string"
+      }
+    },
+    required: [
+      "usergroup_id",
+      "users"
+    ]
+  },
+  users_search: {
+    type: "object",
+    properties: {
+      limit: {
+        default: 10,
+        description: "Maximum number of results to return (1-100). Default is 10.",
+        type: "number"
+      },
+      query: {
+        description: "Search query - matches against real name, display name, username, or email.",
+        type: "string"
+      }
+    },
+    required: [
+      "query"
+    ]
   }
 };
 var embeddedName = "slack-cli";
 var embeddedDescription = "Slack MCP Server";
 var generatorInfo = "Generated by mcporter@0.7.3 \u2014 https://github.com/steipete/mcporter";
 var generatorTools = [
+  {
+    name: "attachment-get-data",
+    description: "Download an attachment's content by file ID. Returns file metadata and content (text files as-is, binary files as base64). Maximum file size is 5MB.",
+    usage: "attachment-get-data --file-id <file-id> [--raw <json>]",
+    flags: "--file-id <file-id> [--raw <json>]"
+  },
   {
     name: "channels-list",
     description: "Get list of channels",
@@ -33236,8 +33420,8 @@ var generatorTools = [
   {
     name: "conversations-add-message",
     description: "Add a message to a public channel, private channel, or direct message (DM, or IM) conversation by channel_id and thread_ts.",
-    usage: "conversations-add-message --channel-id <channel-id> [--content-type <content-type>] [--payload <payload>] [--thread-ts <thread-ts>] [--raw <json>]",
-    flags: "--channel-id <channel-id> [--content-type <content-type>] [--payload <payload>] [--thread-ts <thread-ts>] [--raw <json>]"
+    usage: "conversations-add-message --channel-id <channel-id> [--content-type <content-type>] [--text <text>] [--thread-ts <thread-ts>] [--raw <json>]",
+    flags: "--channel-id <channel-id> [--content-type <content-type>] [--text <text>] [--thread-ts <thread-ts>] [--raw <json>]"
   },
   {
     name: "conversations-history",
@@ -33256,11 +33440,59 @@ var generatorTools = [
     description: "Search messages in a public channel, private channel, or direct message (DM, or IM) conversation using filters. All filters are optional, if not provided then search_query is required.",
     usage: "conversations-search-messages [--cursor <cursor>] [--filter-date-after <filter-date-after>] [--filter-date-before <filter-date-before>] [--filter-date-during <filter-date-during>] [--filter-date-on <filter-date-on>] [--raw <json>]",
     flags: "[--cursor <cursor>] [--filter-date-after <filter-date-after>] [--filter-date-before <filter-date-before>] [--filter-date-during <filter-date-during>] [--filter-date-on <filter-date-on>] [--raw <json>]"
+  },
+  {
+    name: "reactions-add",
+    description: "Add an emoji reaction to a message in a public channel, private channel, or direct message (DM, or IM) conversation.",
+    usage: "reactions-add --channel-id <channel-id> --emoji <emoji> --timestamp <timestamp> [--raw <json>]",
+    flags: "--channel-id <channel-id> --emoji <emoji> --timestamp <timestamp> [--raw <json>]"
+  },
+  {
+    name: "reactions-remove",
+    description: "Remove an emoji reaction from a message in a public channel, private channel, or direct message (DM, or IM) conversation.",
+    usage: "reactions-remove --channel-id <channel-id> --emoji <emoji> --timestamp <timestamp> [--raw <json>]",
+    flags: "--channel-id <channel-id> --emoji <emoji> --timestamp <timestamp> [--raw <json>]"
+  },
+  {
+    name: "usergroups-create",
+    description: "Create a new user group (mention group) in the Slack workspace. After creation, use usergroups_users_update to add members, or users can join themselves with usergroups_me. The handle becomes the @mention (e.g., handle='engineering' creates @engineering).",
+    usage: "usergroups-create [--channels <channels>] [--description <description>] [--handle <handle>] --name <name> [--raw <json>]",
+    flags: "[--channels <channels>] [--description <description>] [--handle <handle>] --name <name> [--raw <json>]"
+  },
+  {
+    name: "usergroups-list",
+    description: "List all user groups (subteams) in the Slack workspace. User groups are mention groups like @engineering or @design that notify all members. Use this to discover available groups, check group membership counts, or find a group's ID before joining/updating it. Returns CSV with columns: id, name, handle, description, user_count, is_external.",
+    usage: "usergroups-list [--include-count <include-count:true|false>] [--include-disabled <include-disabled:true|false>] [--include-users <include-users:true|false>] [--raw <json>]",
+    flags: "[--include-count <include-count:true|false>] [--include-disabled <include-disabled:true|false>] [--include-users <include-users:true|false>] [--raw <json>]"
+  },
+  {
+    name: "usergroups-me",
+    description: "Manage your own user group membership. Use action='list' to see which groups you belong to. Use action='join' with a usergroup_id to add yourself to a group (e.g., to receive @mentions). Use action='leave' with a usergroup_id to remove yourself. This is the easiest way to join/leave groups without needing to know the full member list.",
+    usage: "usergroups-me --action <action> [--usergroup-id <usergroup-id>] [--raw <json>]",
+    flags: "--action <action> [--usergroup-id <usergroup-id>] [--raw <json>]"
+  },
+  {
+    name: "usergroups-update",
+    description: "Update a user group's metadata: name, handle (@mention), description, or default channels. Does NOT change members - use usergroups_users_update for that. At least one field must be provided.",
+    usage: "usergroups-update [--channels <channels>] [--description <description>] [--handle <handle>] [--name <name>] --usergroup-id <usergroup-id> [--raw <json>]",
+    flags: "[--channels <channels>] [--description <description>] [--handle <handle>] [--name <name>] --usergroup-id <usergroup-id> [--raw <json>]"
+  },
+  {
+    name: "usergroups-users-update",
+    description: "Replace all members of a user group with a new list. WARNING: This completely replaces the member list - any user not in the 'users' parameter will be removed. To add/remove just yourself, use usergroups_me instead. To add a single user without removing others, first get current members from usergroups_list with include_users=true, then call this with the combined list.",
+    usage: "usergroups-users-update --usergroup-id <usergroup-id> --users <users> [--raw <json>]",
+    flags: "--usergroup-id <usergroup-id> --users <users> [--raw <json>]"
+  },
+  {
+    name: "users-search",
+    description: "Search for users by name, email, or display name. Returns user details and DM channel ID if available.",
+    usage: "users-search [--limit <limit:number>] --query <query> [--raw <json>]",
+    flags: "[--limit <limit:number>] --query <query> [--raw <json>]"
   }
 ];
 var embeddedMetadata = {
   schemaVersion: 1,
-  generatedAt: "2026-02-12T16:05:18.502Z",
+  generatedAt: "2026-02-13T03:58:38.373Z",
   generator: {
     name: "mcporter",
     version: "0.7.3"
@@ -33296,11 +33528,20 @@ program2.description(embeddedDescription);
 program2.option("-t, --timeout <ms>", "Call timeout in milliseconds", (value) => parseInt(value, 10), 30000);
 program2.option("-o, --output <format>", "Output format: text|markdown|json|raw", "text");
 var commandSignatures = {
+  "attachment-get-data": "function attachment_get_data(file_id: string);",
   "channels-list": "function channels_list(channel_types: string, cursor?: string, limit?: number, sort?: string);",
-  "conversations-add-message": "function conversations_add_message(channel_id: string, content_type?: string, payload?: string, thread_ts?: string);",
+  "conversations-add-message": "function conversations_add_message(channel_id: string, content_type?: string, text?: string, thread_ts?: string);",
   "conversations-history": "function conversations_history(channel_id: string, cursor?: string, include_activity_messages?: boolean, limit?: string);",
   "conversations-replies": "function conversations_replies(channel_id: string, cursor?: string, include_activity_messages?: boolean, limit?: string, thread_ts: string);",
-  "conversations-search-messages": "function conversations_search_messages(cursor?: string, filter_date_after?: string, filter_date_before?: string, filter_date_during?: string, filter_date_on?: string);"
+  "conversations-search-messages": "function conversations_search_messages(cursor?: string, filter_date_after?: string, filter_date_before?: string, filter_date_during?: string, filter_date_on?: string);",
+  "reactions-add": "function reactions_add(channel_id: string, emoji: string, timestamp: string);",
+  "reactions-remove": "function reactions_remove(channel_id: string, emoji: string, timestamp: string);",
+  "usergroups-create": "function usergroups_create(channels?: string, description?: string, handle?: string, name: string);",
+  "usergroups-list": "function usergroups_list(include_count?: boolean, include_disabled?: boolean, include_users?: boolean);",
+  "usergroups-me": "function usergroups_me(action: string, usergroup_id?: string);",
+  "usergroups-update": "function usergroups_update(channels?: string, description?: string, handle?: string, name?: string, usergroup_id: string);",
+  "usergroups-users-update": "function usergroups_users_update(usergroup_id: string, users: string);",
+  "users-search": "function users_search(limit?: number, query: string);"
 };
 program2.configureHelp({
   commandTerm(cmd) {
@@ -33309,6 +33550,26 @@ program2.configureHelp({
   }
 });
 program2.showSuggestionAfterError(true);
+program2.command("attachment-get-data").summary("attachment-get-data --file-id <file-id> [--raw <json>]").description("Download an attachment's content by file ID. Returns file metadata and content (text files as-is, binary files as base64). Maximum file size is 5MB.").usage("--file-id <file-id> [--raw <json>]").option("--raw <json>", "Provide raw JSON arguments to the tool, bypassing flag parsing.").requiredOption("--file-id <file-id>", "The ID of the attachment to download, in format Fxxxxxxxxxx. Attachment IDs can be found in message metadata when HasMedia is true or AttachmentCount > 0. (example: example-id)").alias("attachment_get_data").action(async (cmdOpts) => {
+  const globalOptions = program2.opts();
+  const runtime = await ensureRuntime();
+  const serverName = embeddedName;
+  const proxy = createServerProxy(runtime, serverName, {
+    initialSchemas: embeddedSchemas
+  });
+  try {
+    const args = cmdOpts.raw ? JSON.parse(cmdOpts.raw) : {};
+    if (cmdOpts.fileId !== undefined)
+      args.file_id = cmdOpts.fileId;
+    const call = proxy.attachmentGetData(args);
+    const result = await invokeWithTimeout(call, globalOptions.timeout || 30000);
+    printResult(result, globalOptions.output ?? "text");
+  } finally {
+    await runtime.close(serverName).catch(() => {});
+  }
+}).addHelpText("after", () => `
+Example:
+  ` + 'mcporter call slack-cli.attachment_get_data(file_id: "example-id")');
 program2.command("channels-list").summary("channels-list --channel-types <channel-types> [--cursor <cursor>] [--limit <limit:number>] [--sort <sort>] [--raw <json>]").description("Get list of channels").usage("--channel-types <channel-types> [--cursor <cursor>] [--limit <limit:number>] [--sort <sort>] [--raw <json>]").option("--raw <json>", "Provide raw JSON arguments to the tool, bypassing flag parsing.").requiredOption("--channel-types <channel-types>", "Comma-separated channel types. Allowed values: 'mpim', 'im', 'public_channel', 'private_channel'. Example: 'public_channel,private_channel,im'").option("--cursor <cursor>", "Cursor for pagination. Use the value of the last row and column in the response as next_cursor field returned from the previous request.").option("--limit <limit:number>", "The maximum number of items to return. Must be an integer between 1 and 1000 (maximum 999). (default: 100; example: 100)", (value) => parseFloat(value)).option("--sort <sort>", "Type of sorting. Allowed values: 'popularity' - sort by number of members/participants in each channel.").alias("channels_list").action(async (cmdOpts) => {
   const globalOptions = program2.opts();
   const runtime = await ensureRuntime();
@@ -33335,7 +33596,7 @@ program2.command("channels-list").summary("channels-list --channel-types <channe
 }).addHelpText("after", () => `
 Example:
   ` + 'mcporter call slack-cli.channels_list(channel_types: "value", limit: 100)');
-program2.command("conversations-add-message").summary("conversations-add-message --channel-id <channel-id> [--content-type <content-type>] [--payload <payload>] [--thread-ts <thread-ts>] [--raw <json>]").description("Add a message to a public channel, private channel, or direct message (DM, or IM) conversation by channel_id and thread_ts.").usage("--channel-id <channel-id> [--content-type <content-type>] [--payload <payload>] [--thread-ts <thread-ts>] [--raw <json>]").option("--raw <json>", "Provide raw JSON arguments to the tool, bypassing flag parsing.").requiredOption("--channel-id <channel-id>", "ID of the channel in format Cxxxxxxxxxx or its name starting with #... or @... aka #general or @username_dm. (example: example-id)").option("--content-type <content-type>", "Content type of the message. Default is 'text/markdown'. Allowed values: 'text/markdown', 'text/plain'. (default: text/markdown; example: text/markdown)").option("--payload <payload>", "Message payload in specified content_type format. Example: 'Hello, world!' for text/plain or '# Hello, world!' for text/markdown.").option("--thread-ts <thread-ts>", "Unique identifier of either a thread's parent message or a message in the thread_ts must be the timestamp in format 1234567890.123456 of an existing message with 0 or more replies. Optional, if not provided the message will be added to the channel itself, otherwise it will be added to the thread.").alias("conversations_add_message").action(async (cmdOpts) => {
+program2.command("conversations-add-message").summary("conversations-add-message --channel-id <channel-id> [--content-type <content-type>] [--text <text>] [--thread-ts <thread-ts>] [--raw <json>]").description("Add a message to a public channel, private channel, or direct message (DM, or IM) conversation by channel_id and thread_ts.").usage("--channel-id <channel-id> [--content-type <content-type>] [--text <text>] [--thread-ts <thread-ts>] [--raw <json>]").option("--raw <json>", "Provide raw JSON arguments to the tool, bypassing flag parsing.").requiredOption("--channel-id <channel-id>", "ID of the channel in format Cxxxxxxxxxx or its name starting with #... or @... aka #general or @username_dm. (example: example-id)").option("--content-type <content-type>", "Content type of the message. Default is 'text/markdown'. Allowed values: 'text/markdown', 'text/plain'. (default: text/markdown; example: text/markdown)").option("--text <text>", "Message text in specified content_type format. Example: 'Hello, world!' for text/plain or '# Hello, world!' for text/markdown.").option("--thread-ts <thread-ts>", "Unique identifier of either a thread's parent message or a message in the thread_ts must be the timestamp in format 1234567890.123456 of an existing message with 0 or more replies. Optional, if not provided the message will be added to the channel itself, otherwise it will be added to the thread.").alias("conversations_add_message").action(async (cmdOpts) => {
   const globalOptions = program2.opts();
   const runtime = await ensureRuntime();
   const serverName = embeddedName;
@@ -33348,8 +33609,8 @@ program2.command("conversations-add-message").summary("conversations-add-message
       args.channel_id = cmdOpts.channelId;
     if (cmdOpts.contentType !== undefined)
       args.content_type = cmdOpts.contentType;
-    if (cmdOpts.payload !== undefined)
-      args.payload = cmdOpts.payload;
+    if (cmdOpts.text !== undefined)
+      args.text = cmdOpts.text;
     if (cmdOpts.threadTs !== undefined)
       args.thread_ts = cmdOpts.threadTs;
     const call = proxy.conversationsAddMessage(args);
@@ -33459,6 +33720,198 @@ Example:
   ` + "mcporter call slack-cli.conversations_search_messages()").addHelpText("afterAll", () => `
 ` + "// optional (7): filter_in_channel, filter_in_im_or_mpim, filter_threads_only, filter_users_from, filter_users_with, ..." + `
 `);
+program2.command("reactions-add").summary("reactions-add --channel-id <channel-id> --emoji <emoji> --timestamp <timestamp> [--raw <json>]").description("Add an emoji reaction to a message in a public channel, private channel, or direct message (DM, or IM) conversation.").usage("--channel-id <channel-id> --emoji <emoji> --timestamp <timestamp> [--raw <json>]").option("--raw <json>", "Provide raw JSON arguments to the tool, bypassing flag parsing.").requiredOption("--channel-id <channel-id>", "ID of the channel in format Cxxxxxxxxxx or its name starting with #... or @... aka #general or @username_dm. (example: example-id)").requiredOption("--emoji <emoji>", "The name of the emoji to add as a reaction (without colons). Example: 'thumbsup', 'heart', 'rocket'.").requiredOption("--timestamp <timestamp>", "Timestamp of the message to add reaction to, in format 1234567890.123456.").alias("reactions_add").action(async (cmdOpts) => {
+  const globalOptions = program2.opts();
+  const runtime = await ensureRuntime();
+  const serverName = embeddedName;
+  const proxy = createServerProxy(runtime, serverName, {
+    initialSchemas: embeddedSchemas
+  });
+  try {
+    const args = cmdOpts.raw ? JSON.parse(cmdOpts.raw) : {};
+    if (cmdOpts.channelId !== undefined)
+      args.channel_id = cmdOpts.channelId;
+    if (cmdOpts.emoji !== undefined)
+      args.emoji = cmdOpts.emoji;
+    if (cmdOpts.timestamp !== undefined)
+      args.timestamp = cmdOpts.timestamp;
+    const call = proxy.reactionsAdd(args);
+    const result = await invokeWithTimeout(call, globalOptions.timeout || 30000);
+    printResult(result, globalOptions.output ?? "text");
+  } finally {
+    await runtime.close(serverName).catch(() => {});
+  }
+}).addHelpText("after", () => `
+Example:
+  ` + 'mcporter call slack-cli.reactions_add(channel_id: "example-id", emoji: "va, ...)');
+program2.command("reactions-remove").summary("reactions-remove --channel-id <channel-id> --emoji <emoji> --timestamp <timestamp> [--raw <json>]").description("Remove an emoji reaction from a message in a public channel, private channel, or direct message (DM, or IM) conversation.").usage("--channel-id <channel-id> --emoji <emoji> --timestamp <timestamp> [--raw <json>]").option("--raw <json>", "Provide raw JSON arguments to the tool, bypassing flag parsing.").requiredOption("--channel-id <channel-id>", "ID of the channel in format Cxxxxxxxxxx or its name starting with #... or @... aka #general or @username_dm. (example: example-id)").requiredOption("--emoji <emoji>", "The name of the emoji to remove as a reaction (without colons). Example: 'thumbsup', 'heart', 'rocket'.").requiredOption("--timestamp <timestamp>", "Timestamp of the message to remove reaction from, in format 1234567890.123456.").alias("reactions_remove").action(async (cmdOpts) => {
+  const globalOptions = program2.opts();
+  const runtime = await ensureRuntime();
+  const serverName = embeddedName;
+  const proxy = createServerProxy(runtime, serverName, {
+    initialSchemas: embeddedSchemas
+  });
+  try {
+    const args = cmdOpts.raw ? JSON.parse(cmdOpts.raw) : {};
+    if (cmdOpts.channelId !== undefined)
+      args.channel_id = cmdOpts.channelId;
+    if (cmdOpts.emoji !== undefined)
+      args.emoji = cmdOpts.emoji;
+    if (cmdOpts.timestamp !== undefined)
+      args.timestamp = cmdOpts.timestamp;
+    const call = proxy.reactionsRemove(args);
+    const result = await invokeWithTimeout(call, globalOptions.timeout || 30000);
+    printResult(result, globalOptions.output ?? "text");
+  } finally {
+    await runtime.close(serverName).catch(() => {});
+  }
+}).addHelpText("after", () => `
+Example:
+  ` + 'mcporter call slack-cli.reactions_remove(channel_id: "example-id", emoji:, ...)');
+program2.command("usergroups-create").summary("usergroups-create [--channels <channels>] [--description <description>] [--handle <handle>] --name <name> [--raw <json>]").description("Create a new user group (mention group) in the Slack workspace. After creation, use usergroups_users_update to add members, or users can join themselves with usergroups_me. The handle becomes the @mention (e.g., handle='engineering' creates @engineering).").usage("[--channels <channels>] [--description <description>] [--handle <handle>] --name <name> [--raw <json>]").option("--raw <json>", "Provide raw JSON arguments to the tool, bypassing flag parsing.").option("--channels <channels>", "Comma-separated channel IDs where this group is commonly mentioned. Members get suggestions to join these channels.").option("--description <description>", "Purpose or description shown in group details (e.g., 'Backend and frontend engineers').").option("--handle <handle>", "The @mention handle without the @ symbol (e.g., 'engineering' for @engineering). Keep it short and lowercase. If omitted, Slack auto-generates one from the name.").requiredOption("--name <name>", "Display name of the user group (e.g., 'Engineering Team', 'Design Squad').").alias("usergroups_create").action(async (cmdOpts) => {
+  const globalOptions = program2.opts();
+  const runtime = await ensureRuntime();
+  const serverName = embeddedName;
+  const proxy = createServerProxy(runtime, serverName, {
+    initialSchemas: embeddedSchemas
+  });
+  try {
+    const args = cmdOpts.raw ? JSON.parse(cmdOpts.raw) : {};
+    if (cmdOpts.channels !== undefined)
+      args.channels = cmdOpts.channels;
+    if (cmdOpts.description !== undefined)
+      args.description = cmdOpts.description;
+    if (cmdOpts.handle !== undefined)
+      args.handle = cmdOpts.handle;
+    if (cmdOpts.name !== undefined)
+      args.name = cmdOpts.name;
+    const call = proxy.usergroupsCreate(args);
+    const result = await invokeWithTimeout(call, globalOptions.timeout || 30000);
+    printResult(result, globalOptions.output ?? "text");
+  } finally {
+    await runtime.close(serverName).catch(() => {});
+  }
+}).addHelpText("after", () => `
+Example:
+  ` + 'mcporter call slack-cli.usergroups_create(name: "value")');
+program2.command("usergroups-list").summary("usergroups-list [--include-count <include-count:true|false>] [--include-disabled <include-disabled:true|false>] [--include-users <include-users:true|false>] [--raw <json>]").description("List all user groups (subteams) in the Slack workspace. User groups are mention groups like @engineering or @design that notify all members. Use this to discover available groups, check group membership counts, or find a group's ID before joining/updating it. Returns CSV with columns: id, name, handle, description, user_count, is_external.").usage("[--include-count <include-count:true|false>] [--include-disabled <include-disabled:true|false>] [--include-users <include-users:true|false>] [--raw <json>]").option("--raw <json>", "Provide raw JSON arguments to the tool, bypassing flag parsing.").option("--include-count <include-count:true|false>", "Include user count for each group. Default is true. (default: true; example: true)", (value) => value !== "false").option("--include-disabled <include-disabled:true|false>", "Include disabled/archived groups. Default is false. (default: false; example: false)", (value) => value !== "false").option("--include-users <include-users:true|false>", "Include list of user IDs in each group. Default is false. (default: false; example: false)", (value) => value !== "false").alias("usergroups_list").action(async (cmdOpts) => {
+  const globalOptions = program2.opts();
+  const runtime = await ensureRuntime();
+  const serverName = embeddedName;
+  const proxy = createServerProxy(runtime, serverName, {
+    initialSchemas: embeddedSchemas
+  });
+  try {
+    const args = cmdOpts.raw ? JSON.parse(cmdOpts.raw) : {};
+    if (cmdOpts.includeCount !== undefined)
+      args.include_count = cmdOpts.includeCount;
+    if (cmdOpts.includeDisabled !== undefined)
+      args.include_disabled = cmdOpts.includeDisabled;
+    if (cmdOpts.includeUsers !== undefined)
+      args.include_users = cmdOpts.includeUsers;
+    const call = proxy.usergroupsList(args);
+    const result = await invokeWithTimeout(call, globalOptions.timeout || 30000);
+    printResult(result, globalOptions.output ?? "text");
+  } finally {
+    await runtime.close(serverName).catch(() => {});
+  }
+}).addHelpText("after", () => `
+Example:
+  ` + "mcporter call slack-cli.usergroups_list(include_count: true, include_disab, ...)");
+program2.command("usergroups-me").summary("usergroups-me --action <action> [--usergroup-id <usergroup-id>] [--raw <json>]").description("Manage your own user group membership. Use action='list' to see which groups you belong to. Use action='join' with a usergroup_id to add yourself to a group (e.g., to receive @mentions). Use action='leave' with a usergroup_id to remove yourself. This is the easiest way to join/leave groups without needing to know the full member list.").usage("--action <action> [--usergroup-id <usergroup-id>] [--raw <json>]").option("--raw <json>", "Provide raw JSON arguments to the tool, bypassing flag parsing.").requiredOption("--action <action>", "Action to perform: 'list' returns CSV of groups you're a member of, 'join' adds you to a group, 'leave' removes you from a group.").option("--usergroup-id <usergroup-id>", "ID of the user group (starts with 'S', e.g., 'S0123456789'). Required for 'join' and 'leave' actions. Get IDs from usergroups_list. (example: example-id)").alias("usergroups_me").action(async (cmdOpts) => {
+  const globalOptions = program2.opts();
+  const runtime = await ensureRuntime();
+  const serverName = embeddedName;
+  const proxy = createServerProxy(runtime, serverName, {
+    initialSchemas: embeddedSchemas
+  });
+  try {
+    const args = cmdOpts.raw ? JSON.parse(cmdOpts.raw) : {};
+    if (cmdOpts.action !== undefined)
+      args.action = cmdOpts.action;
+    if (cmdOpts.usergroupId !== undefined)
+      args.usergroup_id = cmdOpts.usergroupId;
+    const call = proxy.usergroupsMe(args);
+    const result = await invokeWithTimeout(call, globalOptions.timeout || 30000);
+    printResult(result, globalOptions.output ?? "text");
+  } finally {
+    await runtime.close(serverName).catch(() => {});
+  }
+}).addHelpText("after", () => `
+Example:
+  ` + 'mcporter call slack-cli.usergroups_me(action: "value", usergroup_id: "exam, ...)');
+program2.command("usergroups-update").summary("usergroups-update [--channels <channels>] [--description <description>] [--handle <handle>] [--name <name>] --usergroup-id <usergroup-id> [--raw <json>]").description("Update a user group's metadata: name, handle (@mention), description, or default channels. Does NOT change members - use usergroups_users_update for that. At least one field must be provided.").usage("[--channels <channels>] [--description <description>] [--handle <handle>] [--name <name>] --usergroup-id <usergroup-id> [--raw <json>]").option("--raw <json>", "Provide raw JSON arguments to the tool, bypassing flag parsing.").option("--channels <channels>", "New default channel IDs (comma-separated). Replaces existing default channels.").option("--description <description>", "New description for the group.").option("--handle <handle>", "New @mention handle (without @). Changing this changes how users mention the group.").option("--name <name>", "New display name for the group.").requiredOption("--usergroup-id <usergroup-id>", "ID of the user group to update (starts with 'S', e.g., 'S0123456789'). Get IDs from usergroups_list. (example: example-id)").alias("usergroups_update").action(async (cmdOpts) => {
+  const globalOptions = program2.opts();
+  const runtime = await ensureRuntime();
+  const serverName = embeddedName;
+  const proxy = createServerProxy(runtime, serverName, {
+    initialSchemas: embeddedSchemas
+  });
+  try {
+    const args = cmdOpts.raw ? JSON.parse(cmdOpts.raw) : {};
+    if (cmdOpts.channels !== undefined)
+      args.channels = cmdOpts.channels;
+    if (cmdOpts.description !== undefined)
+      args.description = cmdOpts.description;
+    if (cmdOpts.handle !== undefined)
+      args.handle = cmdOpts.handle;
+    if (cmdOpts.name !== undefined)
+      args.name = cmdOpts.name;
+    if (cmdOpts.usergroupId !== undefined)
+      args.usergroup_id = cmdOpts.usergroupId;
+    const call = proxy.usergroupsUpdate(args);
+    const result = await invokeWithTimeout(call, globalOptions.timeout || 30000);
+    printResult(result, globalOptions.output ?? "text");
+  } finally {
+    await runtime.close(serverName).catch(() => {});
+  }
+}).addHelpText("after", () => `
+Example:
+  ` + 'mcporter call slack-cli.usergroups_update(usergroup_id: "example-id")');
+program2.command("usergroups-users-update").summary("usergroups-users-update --usergroup-id <usergroup-id> --users <users> [--raw <json>]").description("Replace all members of a user group with a new list. WARNING: This completely replaces the member list - any user not in the 'users' parameter will be removed. To add/remove just yourself, use usergroups_me instead. To add a single user without removing others, first get current members from usergroups_list with include_users=true, then call this with the combined list.").usage("--usergroup-id <usergroup-id> --users <users> [--raw <json>]").option("--raw <json>", "Provide raw JSON arguments to the tool, bypassing flag parsing.").requiredOption("--usergroup-id <usergroup-id>", "ID of the user group (starts with 'S', e.g., 'S0123456789'). Get IDs from usergroups_list. (example: example-id)").requiredOption("--users <users>", "Comma-separated user IDs that will become the COMPLETE member list (e.g., 'U0123456789,U9876543210'). All current members not in this list will be removed.").alias("usergroups_users_update").action(async (cmdOpts) => {
+  const globalOptions = program2.opts();
+  const runtime = await ensureRuntime();
+  const serverName = embeddedName;
+  const proxy = createServerProxy(runtime, serverName, {
+    initialSchemas: embeddedSchemas
+  });
+  try {
+    const args = cmdOpts.raw ? JSON.parse(cmdOpts.raw) : {};
+    if (cmdOpts.usergroupId !== undefined)
+      args.usergroup_id = cmdOpts.usergroupId;
+    if (cmdOpts.users !== undefined)
+      args.users = cmdOpts.users;
+    const call = proxy.usergroupsUsersUpdate(args);
+    const result = await invokeWithTimeout(call, globalOptions.timeout || 30000);
+    printResult(result, globalOptions.output ?? "text");
+  } finally {
+    await runtime.close(serverName).catch(() => {});
+  }
+}).addHelpText("after", () => `
+Example:
+  ` + 'mcporter call slack-cli.usergroups_users_update(usergroup_id: "example-id", ...)');
+program2.command("users-search").summary("users-search [--limit <limit:number>] --query <query> [--raw <json>]").description("Search for users by name, email, or display name. Returns user details and DM channel ID if available.").usage("[--limit <limit:number>] --query <query> [--raw <json>]").option("--raw <json>", "Provide raw JSON arguments to the tool, bypassing flag parsing.").option("--limit <limit:number>", "Maximum number of results to return (1-100). Default is 10. (default: 10; example: 10)", (value) => parseFloat(value)).requiredOption("--query <query>", "Search query - matches against real name, display name, username, or email.").alias("users_search").action(async (cmdOpts) => {
+  const globalOptions = program2.opts();
+  const runtime = await ensureRuntime();
+  const serverName = embeddedName;
+  const proxy = createServerProxy(runtime, serverName, {
+    initialSchemas: embeddedSchemas
+  });
+  try {
+    const args = cmdOpts.raw ? JSON.parse(cmdOpts.raw) : {};
+    if (cmdOpts.limit !== undefined)
+      args.limit = cmdOpts.limit;
+    if (cmdOpts.query !== undefined)
+      args.query = cmdOpts.query;
+    const call = proxy.usersSearch(args);
+    const result = await invokeWithTimeout(call, globalOptions.timeout || 30000);
+    printResult(result, globalOptions.output ?? "text");
+  } finally {
+    await runtime.close(serverName).catch(() => {});
+  }
+}).addHelpText("after", () => `
+Example:
+  ` + 'mcporter call slack-cli.users_search(limit: 10, query: "value")');
 program2.command("__mcporter_inspect", { hidden: true }).description("Internal metadata printer for mcporter inspect-cli.").action(() => {
   const payload = buildMetadataPayload();
   console.log(JSON.stringify(payload, null, 2));

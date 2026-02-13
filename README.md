@@ -33,6 +33,7 @@ You need a **User OAuth Token** (`xoxp-...`) from a Slack App with the right sco
       "user": [
         "channels:history",
         "channels:read",
+        "files:read",
         "groups:history",
         "groups:read",
         "im:history",
@@ -41,6 +42,7 @@ You need a **User OAuth Token** (`xoxp-...`) from a Slack App with the right sco
         "mpim:history",
         "mpim:read",
         "mpim:write",
+        "reactions:write",
         "users:read",
         "chat:write",
         "search:read",
@@ -95,11 +97,23 @@ slack-cli conversations-search-messages --search-query "deploy issue"
 slack-cli conversations-search-messages --search-query "bug" --filter-in-channel '#my-channel'
 slack-cli conversations-search-messages --filter-users-from '@hoss' --filter-date-after '2026-01-01'
 
+# Search users by name, email, or display name
+slack-cli users-search --pattern "john"
+
+# List user groups (@-mention groups like @engineering)
+slack-cli usergroups-list
+
 # Post a message (requires SLACK_MCP_ADD_MESSAGE_TOOL=true)
 slack-cli conversations-add-message --channel-id '#my-channel' --payload "Hello from CLI"
 
 # Reply to a thread (thread-ts from conversations-history output)
 slack-cli conversations-add-message --channel-id '#my-channel' --thread-ts 1234567890.123456 --payload "Thread reply"
+
+# Add a reaction to a message (requires SLACK_MCP_REACTION_TOOL=true)
+slack-cli reactions-add --channel-id '#my-channel' --timestamp 1234567890.123456 --reaction thumbsup
+
+# Download an attachment (requires SLACK_MCP_ATTACHMENT_TOOL=true)
+slack-cli attachment-get-data --file-id F0123456789
 
 # Paginate results using the Cursor column from previous output
 slack-cli channels-list --channel-types public_channel --limit 10 --cursor 'abc123def456'
@@ -164,15 +178,22 @@ Either `--search-query` or at least one filter is required.
 
 ## Available Commands
 
-| Command                         | Description                                            |
-| ------------------------------- | ------------------------------------------------------ |
-| `channels-list`                 | List channels (public, private, DM, group DM)          |
-| `conversations-history`         | Get messages from a channel or DM                      |
-| `conversations-replies`         | Get thread replies                                     |
-| `conversations-search-messages` | Search messages with filters                           |
-| `conversations-add-message`     | Post a message (requires `SLACK_MCP_ADD_MESSAGE_TOOL`) |
-
-More tools (users_search, usergroups, reactions) will be available when [slack-mcp-server](https://github.com/korotovsky/slack-mcp-server) releases them. Run `generate.sh` to pick up new tools.
+| Command                         | Description                                                |
+| ------------------------------- | ---------------------------------------------------------- |
+| `channels-list`                 | List channels (public, private, DM, group DM)              |
+| `conversations-history`         | Get messages from a channel or DM                          |
+| `conversations-replies`         | Get thread replies                                         |
+| `conversations-search-messages` | Search messages with filters                               |
+| `conversations-add-message`     | Post a message (requires `SLACK_MCP_ADD_MESSAGE_TOOL`)     |
+| `users-search`                  | Search users by name, email, or display name               |
+| `usergroups-list`               | List user groups (@-mention groups)                        |
+| `usergroups-me`                 | List/join/leave user groups for current user               |
+| `usergroups-create`             | Create a new user group                                    |
+| `usergroups-update`             | Update user group metadata                                 |
+| `usergroups-users-update`       | Replace all members of a user group                        |
+| `reactions-add`                 | Add emoji reaction (requires `SLACK_MCP_REACTION_TOOL`)    |
+| `reactions-remove`              | Remove emoji reaction (requires `SLACK_MCP_REACTION_TOOL`) |
+| `attachment-get-data`           | Download attachment (requires `SLACK_MCP_ATTACHMENT_TOOL`) |
 
 ## How It Works
 
@@ -198,6 +219,8 @@ The CLI passes through all `SLACK_MCP_*` environment variables to the underlying
 | ---------------------------- | ------------------------------------------------------------------------------------- |
 | `SLACK_MCP_XOXP_TOKEN`       | **Required.** User OAuth token (`xoxp-...`)                                           |
 | `SLACK_MCP_ADD_MESSAGE_TOOL` | Enable message posting (`true` or comma-separated channel IDs)                        |
+| `SLACK_MCP_REACTION_TOOL`    | Enable reactions (`true` or comma-separated channel IDs)                              |
+| `SLACK_MCP_ATTACHMENT_TOOL`  | Enable attachment downloads (`true` or comma-separated channel IDs)                   |
 | `SLACK_MCP_LOG_LEVEL`        | Log level: `debug`, `info`, `warn`, `error` (default: `info`)                         |
 | `SLACK_MCP_PROXY`            | Proxy URL for outgoing requests                                                       |
 | `SLACK_CLI_WARMUP_TIMEOUT`   | Max seconds to wait for daemon startup (default: `60`)                                |
@@ -209,9 +232,9 @@ See the [slack-mcp-server docs](https://github.com/korotovsky/slack-mcp-server#e
 
 ### Regenerating the bundle
 
-The CLI bundle (`src/slack-cli-bundle.js`) is pre-generated and committed to the repo. It contains the embedded tool schemas from slack-mcp-server. You only need to regenerate it when slack-mcp-server adds/changes tools.
+The CLI bundle (`src/slack-cli-bundle.js`) is pre-generated and committed to the repo. It contains the embedded tool schemas from slack-mcp-server. You only need to regenerate it when the pinned upstream commit changes.
 
-Requires: `bun`, `npx` (with mcporter), `gh`, and a valid `SLACK_MCP_XOXP_TOKEN` (the server validates auth during introspection).
+Requires: `bun`, `npx` (with mcporter), `go`, and a valid `SLACK_MCP_XOXP_TOKEN` (the server validates auth during introspection).
 
 ```bash
 SLACK_MCP_XOXP_TOKEN="xoxp-..." ./generate.sh
@@ -220,13 +243,13 @@ git add src/slack-cli-bundle.js && git commit -m "chore: regenerate bundle"
 
 ### Compiling binaries
 
-Requires: `bun`, `gh`
+Requires: `bun`, `go`
 
 ```bash
 # Build for one platform
 ./build.sh darwin-arm64
 
-# Build for all platforms (cross-compile via bun)
+# Build for all platforms (cross-compile via bun + go)
 ./build.sh all
 ```
 
@@ -234,36 +257,34 @@ Tarballs are written to `dist/`.
 
 ## Releasing a New Version
 
-This project's version tracks [korotovsky/slack-mcp-server](https://github.com/korotovsky/slack-mcp-server) releases. To release a new version:
+This project uses [CalVer](https://calver.org/) (`YYYY.M.patch`, e.g. `v2026.2.0`) and pins a specific commit from [korotovsky/slack-mcp-server](https://github.com/korotovsky/slack-mcp-server) via `SLACK_MCP_COMMIT` in `generate.sh` and `build.sh`.
 
-### 1. Update the version pin
+### 1. Update the commit pin (if pulling upstream changes)
 
-Edit `SLACK_MCP_VERSION` in both `generate.sh` and `build.sh` to the new version:
+Find the desired commit on [korotovsky/slack-mcp-server](https://github.com/korotovsky/slack-mcp-server/commits/master) and update `SLACK_MCP_COMMIT` in both `generate.sh` and `build.sh`:
 
 ```bash
 # In both generate.sh and build.sh, change:
-SLACK_MCP_VERSION="v1.1.29"  # ← new version
+SLACK_MCP_COMMIT="<new-commit-sha>"
 ```
 
-### 2. Regenerate the bundle (if tools changed)
+Skip this step if you're releasing a CLI-only change (docs, wrapper, etc.).
 
-If the new slack-mcp-server version adds or modifies tools, regenerate the CLI bundle:
+### 2. Regenerate the bundle (if upstream commit changed)
 
 ```bash
 SLACK_MCP_XOXP_TOKEN="xoxp-..." ./generate.sh
 ```
 
-Skip this step if the release is only bug fixes with no tool schema changes.
-
 ### 3. Commit, tag, and push
 
 ```bash
-git add -A && git commit -m "chore: bump slack-mcp-server to v1.1.29"
-git tag v1.1.29
-git push origin main v1.1.29
+git add -A && git commit -m "feat: bump upstream to <short-sha>, add new tools"
+git tag v2026.2.0
+git push origin main v2026.2.0
 ```
 
-Pushing the tag triggers the [GitHub Actions release workflow](.github/workflows/release.yml), which cross-compiles binaries for all platforms and creates a GitHub Release with the tarballs attached.
+Pushing the tag triggers the [GitHub Actions release workflow](.github/workflows/release.yml), which builds Go + Bun binaries for all platforms and creates a GitHub Release with the tarballs attached.
 
 ## License
 
