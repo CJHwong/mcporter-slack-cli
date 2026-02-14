@@ -172,7 +172,7 @@ is_daemon_running() {
   if command -v ps >/dev/null 2>&1; then
     _comm="$(ps -p "$_pid" -o comm= 2>/dev/null)" || return 1
     case "$_comm" in
-      *slack-mcp-server*) return 0 ;;
+      *slack-mcp-serve*) return 0 ;;
       *) rm -f "$PID_FILE"; return 1 ;;
     esac
   fi
