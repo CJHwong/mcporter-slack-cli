@@ -64,6 +64,17 @@ slack-cli server stop      # stop the daemon manually
 slack-cli server start     # pre-start the daemon (e.g. in shell profile)
 ```
 
+## Claude Code Integration: Skill vs MCP
+
+This CLI can be used with Claude Code in two ways:
+
+- **Skill** — A Claude Code skill (`.claude/skills/slack-cli/SKILL.md`) that calls `slack-cli` via Bash. Zero setup for anyone who clones the repo.
+- **MCP** — Connect Claude Code directly to the `slack-mcp-server` daemon via SSE. Structured tool calls with no shell layer.
+
+Both use the same underlying server. MCP is more efficient for simple, isolated operations (fewer turns per task). Skill is cheaper for complex multi-step workflows and long-running sessions — the skill doc guides the agent and prevents over-exploration, while MCP's verbose tool responses accumulate into heavier context over time.
+
+**Use Skill** for portability, complex tasks, and long sessions. **Use MCP** for simple one-shot operations or non-Claude Code clients. See [benchmarks/token-efficiency](benchmarks/token-efficiency/) for details.
+
 ## Documentation
 
 - [Setup Guide](docs/setup.md) — Slack App configuration and environment variables
