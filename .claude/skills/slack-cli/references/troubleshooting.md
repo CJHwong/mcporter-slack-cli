@@ -40,21 +40,9 @@ If not set, walk the user through setup:
 
 The daemon auto-restarts when `SLACK_MCP_*` env vars change.
 
-## Write tool not available
+## Write tools
 
-Posting messages, reactions, and attachments require opt-in env vars:
-
-```bash
-export SLACK_MCP_ADD_MESSAGE_TOOL=true    # enable posting
-export SLACK_MCP_REACTION_TOOL=true       # enable reactions
-export SLACK_MCP_ATTACHMENT_TOOL=true     # enable attachments
-```
-
-Check:
-
-```bash
-[ -n "$SLACK_MCP_ADD_MESSAGE_TOOL" ] && echo "configured" || echo "not set"
-```
+`conversations-add-message`, `reactions-add/remove`, and `attachment-get-data` are enabled by default — the wrapper exports `SLACK_MCP_ADD_MESSAGE_TOOL`, `SLACK_MCP_REACTION_TOOL`, and `SLACK_MCP_ATTACHMENT_TOOL` to `true` on invocation if they're unset. To disable one, set it explicitly to a non-true value before calling `slack-cli`.
 
 ## Daemon issues
 

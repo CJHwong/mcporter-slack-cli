@@ -25,6 +25,8 @@ If any command fails (not found, auth error, etc.), see `references/troubleshoot
 | Read thread | `slack-cli conversations-replies --channel-id '#channel' --thread-ts <ts> --limit 50` |
 | Search | `slack-cli conversations-search-messages --search-query "text"` |
 | Post message | `slack-cli conversations-add-message --channel-id '#channel' --text "text"` |
+| React | `slack-cli reactions-add --channel-id <id> --timestamp <ts> --emoji thumbsup` |
+| Download file | `slack-cli attachment-get-data --file-id <id> -o raw \| jq -r '.raw.content[0].text' \| base64 -d > out.bin` |
 
 ## Task Guides
 
@@ -43,7 +45,8 @@ For server management, pagination, output formats, and global flags → see `ref
 ## Gotchas
 
 - `--limit` on `conversations-replies` silently drops replies older than the time range — only the parent message is guaranteed. Use a message count (e.g. `--limit 100`) to get the full thread.
-- `usergroups-users-update` **replaces** the entire member list. Fetch current members first, merge, then update.
-- Write commands (`conversations-add-message`, `reactions-add`) require env vars: `SLACK_MCP_ADD_MESSAGE_TOOL=true`, `SLACK_MCP_REACTION_TOOL=true`. If not set, the command fails. See `references/troubleshooting.md`.
+- `usergroups-list --include-users true` is a no-op — the upstream CSV formatter drops the users array. To list group members, see `references/users.md` (direct Slack API call via `$SLACK_MCP_XOXP_TOKEN`).
+- `usergroups-users-update` **replaces** the entire member list. Fetch current members via the API recipe in `references/users.md`, merge, then update.
+- To find messages with file attachments, don't rely on `has:file` in search — it doesn't filter through the MCP layer. Scan `conversations-history` and look for rows where `FileCount > 0` / `AttachmentIDs` is non-empty.
 - Attachment downloads only work for Slack-hosted files. External links (Google Docs, Dropbox) return 401 — use the URL from message output instead.
 - `-o json` and `-o markdown` produce CSV identical to default. Only `-o raw` returns MCP JSON envelope.

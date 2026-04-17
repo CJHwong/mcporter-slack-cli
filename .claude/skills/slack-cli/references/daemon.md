@@ -46,12 +46,18 @@ Note: `-o json`, `-o markdown`, and `-o text` all produce CSV output. Only `-o r
 
 ## attachment-get-data
 
-Download attachment content by file ID. Requires `SLACK_MCP_ATTACHMENT_TOOL` env var. 5MB file size limit.
+Download attachment content by file ID. 5MB file size limit. Binary files are returned base64-encoded inside an MCP JSON envelope — decode in one pass with `-o raw`:
 
 ```bash
-slack-cli attachment-get-data --file-id <id>
+# Binary (images, PDFs, etc.)
+slack-cli attachment-get-data --file-id <id> -o raw \
+  | jq -r '.raw.content[0].text' \
+  | base64 -d > /tmp/out.bin
+
+# Text files come back as-is — no base64
+slack-cli attachment-get-data --file-id <id> > /tmp/out.txt
 ```
 
-Text files return content as-is; binary files return base64.
+**Finding a file ID:** the `conversations-history` rows carry `FileCount` and `AttachmentIDs` (comma-separated) columns. Don't rely on `has:file` in `conversations-search-messages` — it doesn't filter through the MCP layer.
 
-**Limitation:** Only works with files uploaded directly to Slack. Externally hosted files (Google Docs, Dropbox, OneDrive, etc.) shared as links will return a 401 error because they lack a Slack-hosted download URL. Use the link from `conversations-history` output to access those files directly instead.
+**Limitation:** Only works with files uploaded directly to Slack. Externally hosted files (Google Docs, Dropbox, OneDrive, etc.) shared as links return 401 because they lack a Slack-hosted download URL. Use the link from `conversations-history` output to access those files directly instead.
