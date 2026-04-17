@@ -16,6 +16,7 @@ set -euo pipefail
 
 SLACK_MCP_REPO="korotovsky/slack-mcp-server"
 SLACK_MCP_COMMIT="6ddc82863ab8b35b2ab73e9258083616532a973d"
+SLACK_MCP_LOCAL="${SLACK_MCP_LOCAL:-}"  # set to local path to skip git clone
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 DIST_DIR="$SCRIPT_DIR/dist"
 BUNDLE="$SCRIPT_DIR/src/slack-cli-bundle.js"
@@ -90,10 +91,16 @@ command -v go  >/dev/null 2>&1 || die "go (Go compiler) is required but not foun
 WORK_DIR="$(mktemp -d)"
 mkdir -p "$DIST_DIR"
 
-echo "==> Cloning slack-mcp-server at $SLACK_MCP_COMMIT..."
-REPO_DIR="$WORK_DIR/slack-mcp-server"
-git clone --quiet --depth 1 https://github.com/$SLACK_MCP_REPO "$REPO_DIR"
-(cd "$REPO_DIR" && git fetch --quiet --depth 1 origin "$SLACK_MCP_COMMIT" && git checkout --quiet "$SLACK_MCP_COMMIT")
+if [[ -n "$SLACK_MCP_LOCAL" ]]; then
+  [[ -d "$SLACK_MCP_LOCAL" ]] || die "SLACK_MCP_LOCAL=$SLACK_MCP_LOCAL does not exist"
+  echo "==> Using local slack-mcp-server at $SLACK_MCP_LOCAL"
+  REPO_DIR="$SLACK_MCP_LOCAL"
+else
+  echo "==> Cloning slack-mcp-server at $SLACK_MCP_COMMIT..."
+  REPO_DIR="$WORK_DIR/slack-mcp-server"
+  git clone --quiet --depth 1 https://github.com/$SLACK_MCP_REPO "$REPO_DIR"
+  (cd "$REPO_DIR" && git fetch --quiet --depth 1 origin "$SLACK_MCP_COMMIT" && git checkout --quiet "$SLACK_MCP_COMMIT")
+fi
 
 echo "==> Bundle: $BUNDLE"
 echo "==> Target(s): $PLATFORMS"
@@ -133,6 +140,14 @@ for PLATFORM in $PLATFORMS; do
 #!/bin/sh
 DIR="$(cd "$(dirname "$0")" && pwd)"
 export PATH="$DIR:$PATH"
+
+# Enable write-gated tools by default. The upstream MCP server's opt-in is
+# aimed at shared/multi-user deployments; for this single-user CLI the gate
+# is friction without value. Set any of these to anything non-true explicitly
+# (e.g. SLACK_MCP_REACTION_TOOL=false) to opt out.
+: "${SLACK_MCP_ADD_MESSAGE_TOOL:=true}"; export SLACK_MCP_ADD_MESSAGE_TOOL
+: "${SLACK_MCP_REACTION_TOOL:=true}";    export SLACK_MCP_REACTION_TOOL
+: "${SLACK_MCP_ATTACHMENT_TOOL:=true}";  export SLACK_MCP_ATTACHMENT_TOOL
 
 # NOTE: Fixed port. Only one slack-cli instance per machine is supported.
 # If you need multi-user support, override SLACK_CLI_STATE_DIR per user and
