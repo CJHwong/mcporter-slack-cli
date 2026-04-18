@@ -16,6 +16,14 @@ curl -fsSL https://raw.githubusercontent.com/CJHwong/mcporter-slack-cli/main/ins
 
 Or download a tarball from [Releases](https://github.com/CJHwong/mcporter-slack-cli/releases), extract, and add to your PATH.
 
+Install or update the Agent skill into a project's `.agents/skills/`:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/CJHwong/mcporter-slack-cli/main/install-skill.sh | sh
+```
+
+Override target with `SKILL_DIR=path/to/skills`.
+
 ## Quick Start
 
 ```bash
