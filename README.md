@@ -1,5 +1,7 @@
 # mcporter-slack-cli
 
+> **Superseded by [slacker.sh](https://github.com/CJHwong/slacker.sh). Use that instead.**
+
 A portable, zero-dependency Slack CLI. No Go, Node, Bun, or other runtime needed — just a single binary.
 
 Built with [mcporter](https://github.com/steipete/mcporter) wrapping [korotovsky/slack-mcp-server](https://github.com/korotovsky/slack-mcp-server).
